@@ -55,6 +55,14 @@ func (e Enum[T]) Get() *T {
 	return &e.value
 }
 
+func (e Enum[T]) GetValue() T {
+	if !e.set || e.null {
+		var zero T
+		return zero
+	}
+	return e.value
+}
+
 // parseEnumFromString преобразует строку в значение enum типа T.
 // Поддерживает:
 //   - Прото-енумы (через protoreflect)
