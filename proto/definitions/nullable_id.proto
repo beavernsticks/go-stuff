@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package bsgostuff;
+option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+
+message NullableID {
+  oneof value {
+    string id   = 1;
+    bool   null = 2;
+  }
+}

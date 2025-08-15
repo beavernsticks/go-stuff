@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package bsgostuff;
+option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+
+enum PublicationStatus {
+  PUBLICATION_STATUS_UNKNOWN     = 0;
+  PUBLICATION_STATUS_DRAFT       = 1;
+  PUBLICATION_STATUS_PUBLISHED   = 2;
+  PUBLICATION_STATUS_UNPUBLISHED = 3;
+}
+
+enum MoveDirection {
+  MOVE_DIRECTION_UNKNOWN = 0;
+  MOVE_DIRECTION_UP      = 1;
+  MOVE_DIRECTION_DOWN    = 2;
+  MOVE_DIRECTION_TOP     = 3;
+  MOVE_DIRECTION_BOTTOM  = 4;
+}

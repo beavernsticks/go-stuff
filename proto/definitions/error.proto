@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package bsgostuff;
+option go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+
+message Error {
+  string code = 1;
+  string message = 2;
+}
