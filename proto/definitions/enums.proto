@@ -3,6 +3,12 @@ syntax = "proto3";
 package bsgostuff;
 option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
 
+enum StorageType {
+  STORAGE_TYPE_UNKNOWN = 0;
+  STORAGE_TYPE_LOCAL   = 1;
+  STORAGE_TYPE_S3      = 2;
+}
+
 enum PublicationStatus {
   PUBLICATION_STATUS_UNKNOWN     = 0;
   PUBLICATION_STATUS_DRAFT       = 1;

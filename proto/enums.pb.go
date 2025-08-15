@@ -21,6 +21,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type StorageType int32
+
+const (
+	StorageType_STORAGE_TYPE_UNKNOWN StorageType = 0
+	StorageType_STORAGE_TYPE_LOCAL   StorageType = 1
+	StorageType_STORAGE_TYPE_S3      StorageType = 2
+)
+
+// Enum value maps for StorageType.
+var (
+	StorageType_name = map[int32]string{
+		0: "STORAGE_TYPE_UNKNOWN",
+		1: "STORAGE_TYPE_LOCAL",
+		2: "STORAGE_TYPE_S3",
+	}
+	StorageType_value = map[string]int32{
+		"STORAGE_TYPE_UNKNOWN": 0,
+		"STORAGE_TYPE_LOCAL":   1,
+		"STORAGE_TYPE_S3":      2,
+	}
+)
+
+func (x StorageType) Enum() *StorageType {
+	p := new(StorageType)
+	*p = x
+	return p
+}
+
+func (x StorageType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StorageType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_definitions_enums_proto_enumTypes[0].Descriptor()
+}
+
+func (StorageType) Type() protoreflect.EnumType {
+	return &file_proto_definitions_enums_proto_enumTypes[0]
+}
+
+func (x StorageType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StorageType.Descriptor instead.
+func (StorageType) EnumDescriptor() ([]byte, []int) {
+	return file_proto_definitions_enums_proto_rawDescGZIP(), []int{0}
+}
+
 type PublicationStatus int32
 
 const (
@@ -57,11 +106,11 @@ func (x PublicationStatus) String() string {
 }
 
 func (PublicationStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_definitions_enums_proto_enumTypes[0].Descriptor()
+	return file_proto_definitions_enums_proto_enumTypes[1].Descriptor()
 }
 
 func (PublicationStatus) Type() protoreflect.EnumType {
-	return &file_proto_definitions_enums_proto_enumTypes[0]
+	return &file_proto_definitions_enums_proto_enumTypes[1]
 }
 
 func (x PublicationStatus) Number() protoreflect.EnumNumber {
@@ -70,7 +119,7 @@ func (x PublicationStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PublicationStatus.Descriptor instead.
 func (PublicationStatus) EnumDescriptor() ([]byte, []int) {
-	return file_proto_definitions_enums_proto_rawDescGZIP(), []int{0}
+	return file_proto_definitions_enums_proto_rawDescGZIP(), []int{1}
 }
 
 type MoveDirection int32
@@ -112,11 +161,11 @@ func (x MoveDirection) String() string {
 }
 
 func (MoveDirection) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_definitions_enums_proto_enumTypes[1].Descriptor()
+	return file_proto_definitions_enums_proto_enumTypes[2].Descriptor()
 }
 
 func (MoveDirection) Type() protoreflect.EnumType {
-	return &file_proto_definitions_enums_proto_enumTypes[1]
+	return &file_proto_definitions_enums_proto_enumTypes[2]
 }
 
 func (x MoveDirection) Number() protoreflect.EnumNumber {
@@ -125,14 +174,18 @@ func (x MoveDirection) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MoveDirection.Descriptor instead.
 func (MoveDirection) EnumDescriptor() ([]byte, []int) {
-	return file_proto_definitions_enums_proto_rawDescGZIP(), []int{1}
+	return file_proto_definitions_enums_proto_rawDescGZIP(), []int{2}
 }
 
 var File_proto_definitions_enums_proto protoreflect.FileDescriptor
 
 const file_proto_definitions_enums_proto_rawDesc = "" +
 	"\n" +
-	"\x1dproto/definitions/enums.proto\x12\tbsgostuff*\x97\x01\n" +
+	"\x1dproto/definitions/enums.proto\x12\tbsgostuff*T\n" +
+	"\vStorageType\x12\x18\n" +
+	"\x14STORAGE_TYPE_UNKNOWN\x10\x00\x12\x16\n" +
+	"\x12STORAGE_TYPE_LOCAL\x10\x01\x12\x13\n" +
+	"\x0fSTORAGE_TYPE_S3\x10\x02*\x97\x01\n" +
 	"\x11PublicationStatus\x12\x1e\n" +
 	"\x1aPUBLICATION_STATUS_UNKNOWN\x10\x00\x12\x1c\n" +
 	"\x18PUBLICATION_STATUS_DRAFT\x10\x01\x12 \n" +
@@ -157,10 +210,11 @@ func file_proto_definitions_enums_proto_rawDescGZIP() []byte {
 	return file_proto_definitions_enums_proto_rawDescData
 }
 
-var file_proto_definitions_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_definitions_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_proto_definitions_enums_proto_goTypes = []any{
-	(PublicationStatus)(0), // 0: bsgostuff.PublicationStatus
-	(MoveDirection)(0),     // 1: bsgostuff.MoveDirection
+	(StorageType)(0),       // 0: bsgostuff.StorageType
+	(PublicationStatus)(0), // 1: bsgostuff.PublicationStatus
+	(MoveDirection)(0),     // 2: bsgostuff.MoveDirection
 }
 var file_proto_definitions_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -180,7 +234,7 @@ func file_proto_definitions_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_definitions_enums_proto_rawDesc), len(file_proto_definitions_enums_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
