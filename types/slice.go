@@ -6,21 +6,44 @@ import (
 	"reflect"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"google.golang.org/protobuf/proto"
 )
 
-// Slice обобщённый тип для массивов с поддержкой nil/PGX
+// Slice implements a nullable generic slice type with three-state logic:
+// - Set (with concrete elements)
+// - Explicitly set to null
+// - Unset (not initialized)
+//
+// Provides flexible slice handling with:
+// - Protocol Buffers support (for repeated fields)
+// - PostgreSQL array storage
+// - JSON serialization/deserialization
+//
+// Implements Settable[[]T, []proto.Message, pgtype.Array[T]] where:
+// - T is the element type
+// - Proto representation is []proto.Message (for protobuf-compatible elements)
+// - PostgreSQL storage uses pgtype.Array[T]
 type Slice[T any] struct {
 	items []T
 	set   bool
 	null  bool
 }
 
-// NewSlice конструктор
+// Compile-time interface check
+var _ Settable[[]any, []proto.Message, pgtype.Array[any]] = (*Slice[any])(nil)
+
+// NewSlice creates an initialized slice value.
+// Returns concrete type for method chaining.
 func NewSlice[T any](items []T) Slice[T] {
 	return Slice[T]{items: items, set: true}
 }
 
-// Set принимает: []T, pgtype.Array[T], nil
+// Set assigns a value from supported types:
+// - []T: direct slice value
+// - pgtype.Array[T]: respects Valid flag
+// - []proto.Message: for protobuf repeated fields
+// - nil: explicit null
+// - Other slice types: attempts element conversion
 func (s *Slice[T]) Set(value any) error {
 	s.set = true
 	s.null = false
@@ -35,52 +58,140 @@ func (s *Slice[T]) Set(value any) error {
 		} else {
 			s.items = v.Elements
 		}
+	case []proto.Message:
+		items := make([]T, len(v))
+		for i, msg := range v {
+			if converted, ok := any(msg).(T); ok {
+				items[i] = converted
+			} else {
+				return fmt.Errorf("element %d is not convertible to type %T", i, *new(T))
+			}
+		}
+		s.items = items
 	case nil:
 		s.null = true
 	default:
-		// Попытка конвертации через reflection
+		// Attempt conversion via reflection
 		val := reflect.ValueOf(value)
 		if val.Kind() == reflect.Slice {
 			items := make([]T, val.Len())
 			for i := 0; i < val.Len(); i++ {
-				if item, ok := val.Index(i).Interface().(T); ok {
+				elem := val.Index(i).Interface()
+				if item, ok := elem.(T); ok {
 					items[i] = item
+				} else if msg, ok := elem.(proto.Message); ok {
+					if converted, ok := any(msg).(T); ok {
+						items[i] = converted
+					} else {
+						return fmt.Errorf("element %d is not convertible to type %T", i, *new(T))
+					}
 				} else {
-					return fmt.Errorf("несовместимый тип элемента: %T", val.Index(i).Interface())
+					return fmt.Errorf("incompatible element type: %T", elem)
 				}
 			}
 			s.items = items
 		} else {
-			return fmt.Errorf("неподдерживаемый тип: %T", value)
+			return fmt.Errorf("unsupported type: %T", value)
 		}
 	}
 	return nil
 }
 
-// Get возвращает []T (nil если null/unset)
-func (s Slice[T]) Get() []T {
+// GetValue returns the underlying slice.
+// Returns nil when unset or null.
+func (s Slice[T]) GetValue() []T {
 	if !s.set || s.null {
 		return nil
 	}
 	return s.items
 }
 
-// ToPgx конвертация в pgtype.Array[T]
+// GetPtr returns a pointer to the slice.
+// Returns nil when unset or null.
+func (s Slice[T]) GetPtr() *[]T {
+	if !s.set || s.null {
+		return nil
+	}
+	return &s.items
+}
+
+// IsSet indicates whether the value was explicitly set.
+// Returns false for uninitialized zero values.
+func (s Slice[T]) IsSet() bool {
+	return s.set
+}
+
+// IsNull indicates whether the value was explicitly set to null.
+// Returns false for unset values.
+func (s Slice[T]) IsNull() bool {
+	return s.null
+}
+
+// ToProto converts to []proto.Message if elements are proto.Message.
+// Returns nil when unset or null or for non-protobuf elements.
+func (s Slice[T]) ToProto() []proto.Message {
+	if !s.set || s.null {
+		return nil
+	}
+
+	messages := make([]proto.Message, 0, len(s.items))
+	for _, item := range s.items {
+		if msg, ok := any(item).(proto.Message); ok {
+			messages = append(messages, msg)
+		} else {
+			return nil
+		}
+	}
+	return messages
+}
+
+// ToPgx converts to pgtype.Array[T] for PostgreSQL integration.
+// Sets Valid flag according to null/unset state.
 func (s Slice[T]) ToPgx() pgtype.Array[T] {
 	return pgtype.Array[T]{
 		Elements: s.items,
 		Valid:    s.set && !s.null,
+		Dims:     []pgtype.ArrayDimension{{Length: int32(len(s.items)), LowerBound: 1}},
 	}
 }
 
-// -- Стандартные методы --
-func (s Slice[T]) IsSet() bool  { return s.set }
-func (s Slice[T]) IsNull() bool { return s.null }
-
-// MarshalJSON для JSON
+// MarshalJSON implements json.Marshaler interface.
 func (s Slice[T]) MarshalJSON() ([]byte, error) {
 	if !s.set || s.null {
 		return []byte("null"), nil
 	}
 	return json.Marshal(s.items)
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+func (s *Slice[T]) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		s.set = true
+		s.null = true
+		s.items = nil
+		return nil
+	}
+
+	var items []T
+	if err := json.Unmarshal(data, &items); err != nil {
+		return err
+	}
+	return s.Set(items)
+}
+
+// Append adds elements to the slice.
+// Initializes the slice if not already set.
+func (s *Slice[T]) Append(elements ...T) {
+	s.set = true
+	s.null = false
+	s.items = append(s.items, elements...)
+}
+
+// Len returns the number of elements in the slice.
+// Returns 0 when unset or null.
+func (s Slice[T]) Len() int {
+	if !s.set || s.null {
+		return 0
+	}
+	return len(s.items)
 }

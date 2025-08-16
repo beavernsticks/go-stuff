@@ -23,10 +23,12 @@ type UnmodifiedEntity struct {
 }
 
 func NewEntity() Entity {
+	now := bsgostuff_types.NewCurrentTimestamp()
+
 	return Entity{
 		ID:        bsgostuff_types.NewID(),
-		CreatedAt: bsgostuff_types.Now(),
-		UpdatedAt: bsgostuff_types.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
@@ -36,10 +38,12 @@ func NewEntityPtr() *Entity {
 }
 
 func NewDeletableEntity() DeletableEntity {
+	now := bsgostuff_types.NewCurrentTimestamp()
+
 	return DeletableEntity{
 		ID:        bsgostuff_types.NewID(),
-		CreatedAt: bsgostuff_types.Now(),
-		UpdatedAt: bsgostuff_types.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 		IsDeleted: bsgostuff_types.NewBool(false),
 	}
 }
@@ -52,7 +56,7 @@ func NewDeletableEntityPtr() *DeletableEntity {
 func NewUnmodifiedEntity() UnmodifiedEntity {
 	return UnmodifiedEntity{
 		ID:        bsgostuff_types.NewID(),
-		CreatedAt: bsgostuff_types.Now(),
+		CreatedAt: bsgostuff_types.NewCurrentTimestamp(),
 	}
 }
 

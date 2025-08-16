@@ -1,162 +1,137 @@
 package bsgostuff_types
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+// ID implements a nullable UUID identifier with three-state logic:
+// - Set (with concrete UUID value)
+// - Explicitly set to null
+// - Unset (not initialized)
+//
+// Implements Settable[uuid.UUID, *wrapperspb.StringValue, pgtype.UUID]
 type ID struct {
 	value uuid.UUID
 	set   bool
 	null  bool
 }
 
-// --- Универсальные методы ---
+// Compile-time interface check
+var _ Settable[uuid.UUID, *wrapperspb.StringValue, pgtype.UUID] = (*ID)(nil)
 
-// Set принимает: string, uuid.UUID, pgtype.UUID, *string, nil.
-func (u *ID) Set(value any) error {
-	u.set = true
-	u.null = false
-	u.value = uuid.Nil // Сбрасываем значение
+// NewID creates a new initialized UUID value.
+// Generates random UUID using google/uuid package.
+func NewID() ID {
+	return ID{
+		value: uuid.New(),
+		set:   true,
+	}
+}
+
+// NewIDFromString creates an ID from UUID string.
+// Returns error if string is not valid UUID format.
+func NewIDFromString(s string) (ID, error) {
+	id := ID{}
+	err := id.Set(s)
+	return id, err
+}
+
+// Set assigns a value from supported types:
+// - string: must be valid UUID format
+// - *string: nil pointer treated as null
+// - uuid.UUID: direct UUID value
+// - pgtype.UUID: respects Valid flag
+// - nil: explicit null
+func (i *ID) Set(value any) error {
+	i.set = true
+	i.null = false
+	i.value = uuid.Nil // Zero value
 
 	switch v := value.(type) {
 	case string:
-		return u.parseFromString(v)
+		parsed, err := uuid.Parse(v)
+		if err != nil {
+			return fmt.Errorf("invalid UUID format: %w", err)
+		}
+		i.value = parsed
 	case *string:
 		if v == nil {
-			u.null = true
+			i.null = true
 		} else {
-			return u.parseFromString(*v)
+			parsed, err := uuid.Parse(*v)
+			if err != nil {
+				return fmt.Errorf("invalid UUID format: %w", err)
+			}
+			i.value = parsed
 		}
 	case uuid.UUID:
-		u.value = v
+		i.value = v
 	case pgtype.UUID:
-		if !v.Valid {
-			u.null = true
-		} else {
-			u.value = v.Bytes
-		}
+		i.null = !v.Valid
+		i.value = v.Bytes
 	case nil:
-		u.null = true
+		i.null = true
 	default:
-		return fmt.Errorf("unsupported UUID type: %T", value)
+		return fmt.Errorf("unsupported type: %T", value)
 	}
 	return nil
 }
 
-// Get возвращает uuid.UUID (или uuid.Nil если null/unset).
-func (u ID) Get() uuid.UUID {
-	if !u.set || u.null {
-		return uuid.Nil
-	}
-	return u.value
+// GetValue returns the underlying UUID value.
+// Returns uuid.Nil when unset or null.
+func (i ID) GetValue() uuid.UUID {
+	return i.value
 }
 
-// GetPtr возвращает *uuid.UUID (nil если null/unset).
-func (u ID) GetPtr() *uuid.UUID {
-	if !u.set || u.null {
+// GetPtr returns a pointer to the UUID value.
+// Returns nil when unset or null.
+func (i ID) GetPtr() *uuid.UUID {
+	if !i.set || i.null {
 		return nil
 	}
-	return &u.value
+	return &i.value
 }
 
-// --- Специфичные методы ---
-
-// NewUUID генерирует новый UUID и устанавливает его.
-func (u *ID) NewID() {
-	u.value = uuid.New()
-	u.set = true
-	u.null = false
+// IsSet indicates whether the value was explicitly set.
+// Returns false for uninitialized zero values.
+func (i ID) IsSet() bool {
+	return i.set
 }
 
-// ToPgx конвертирует в pgtype.UUID.
-func (u ID) ToPgx() pgtype.UUID {
-	if !u.set || u.null {
-		return pgtype.UUID{Valid: false}
-	}
-	return pgtype.UUID{Bytes: u.value, Valid: true}
+// IsNull indicates whether the value was explicitly set to null.
+// Returns false for unset values.
+func (i ID) IsNull() bool {
+	return i.null
 }
 
-// --- Приватные методы ---
-
-func (u *ID) parseFromString(s string) error {
-	parsed, err := uuid.Parse(s)
-	if err != nil {
-		return fmt.Errorf("invalid UUID format: %w", err)
-	}
-	u.value = parsed
-	return nil
-}
-
-// --- Интеграция с БД и JSON ---
-
-// Scan для sql.Scanner.
-func (u *ID) Scan(src any) error {
-	switch v := src.(type) {
-	case []byte:
-		return u.Set(string(v))
-	case string:
-		return u.Set(v)
-	case nil:
-		u.null = true
-		u.set = true
-	default:
-		return fmt.Errorf("unsupported scan type: %T", src)
-	}
-	return nil
-}
-
-// Value для driver.Valuer.
-func (u ID) Value() (driver.Value, error) {
-	if !u.set || u.null {
-		return nil, nil
-	}
-	return u.value.String(), nil
-}
-
-// MarshalJSON для JSON.
-func (u ID) MarshalJSON() ([]byte, error) {
-	if !u.set || u.null {
-		return []byte("null"), nil
-	}
-	return []byte(`"` + u.value.String() + `"`), nil
-}
-
-// UnmarshalJSON для JSON.
-func (u *ID) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		u.null = true
+// ToProto converts to protobuf StringValue wrapper.
+// Returns nil when unset or null.
+// UUID is transmitted as canonical string representation.
+func (i ID) ToProto() *wrapperspb.StringValue {
+	if !i.set || i.null {
 		return nil
 	}
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
+	return wrapperspb.String(i.value.String())
+}
+
+// ToPgx converts to pgtype.UUID for PostgreSQL integration.
+// Sets Valid flag according to null/unset state.
+func (i ID) ToPgx() pgtype.UUID {
+	return pgtype.UUID{
+		Bytes: i.value,
+		Valid: i.set && !i.null,
 	}
-	return u.Set(s)
 }
 
-func (u ID) IsNull() bool {
-	return u.null
-}
-
-func (u ID) IsSet() bool {
-	return u.set
-}
-
-func (u ID) Validate() error {
-	if u.set && !u.null && u.value == uuid.Nil {
-		return errors.New("UUID не может быть нулевым")
+// String returns canonical UUID string representation.
+// Returns empty string when unset or null.
+func (i ID) String() string {
+	if !i.set || i.null {
+		return ""
 	}
-	return nil
-}
-
-func NewID() ID {
-	u := ID{}
-	u.NewID()
-	return u
+	return i.value.String()
 }
