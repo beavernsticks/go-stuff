@@ -195,3 +195,76 @@ func (s Slice[T]) Len() int {
 	}
 	return len(s.items)
 }
+
+// SliceMapper transforms a slice of type T to a slice of type R by applying a mapping function to each element.
+//
+// This is a generic implementation of the common map operation found in functional programming.
+// It handles nil input safely and preserves the original slice length, applying the mapper
+// function to every element in sequence.
+//
+// Example:
+//
+//	numbers := []int{1, 2, 3}
+//	doubled := SliceMapper(numbers, func(n int) int {
+//	    return n * 2
+//	}) // returns []int{2, 4, 6}
+//
+//	nilSlice := []string(nil)
+//	result := SliceMapper(nilSlice, strings.ToUpper) // returns nil
+//
+// Parameters:
+//   - input: The input slice to transform (may be nil)
+//   - mapper: Function that converts a T to an R
+//
+// Returns:
+//   - A new slice with each element transformed by mapper
+//   - nil if input is nil
+func SliceMapper[T any, R any](input []T, mapper func(req T) R) []R {
+	if input == nil {
+		return nil
+	}
+
+	result := make([]R, len(input))
+	for i, v := range input {
+		result[i] = mapper(v)
+	}
+
+	return result
+}
+
+// SlicePtrMapper transforms a slice of pointers of type T to a slice of pointers of type R
+// by applying a mapping function to each non-nil element.
+//
+// This function safely handles nil values in both the input slice and its elements.
+// The mapper function is only called for non-nil elements, and nil elements in the input
+// result in nil elements in the output at the same positions.
+//
+// Example:
+//
+//	users := []*User{user1, nil, user2}
+//	names := SlicePtrMapper(users, func(u *User) *string {
+//	    return &u.Name
+//	}) // returns []*string{&user1.Name, nil, &user2.Name}
+//
+// Parameters:
+//   - input: The input slice of pointers (may be nil or contain nil elements)
+//   - mapper: Function that converts a *T to a *R
+//
+// Returns:
+//   - A new slice with each non-nil element transformed by mapper
+//   - nil if input is nil
+//   - nil elements in positions where input had nil elements
+func SlicePtrMapper[T any, R any](input []*T, mapper func(req *T) *R) []*R {
+	if input == nil {
+		return nil
+	}
+
+	result := make([]*R, len(input))
+	for i, v := range input {
+		if v != nil {
+			result[i] = mapper(v)
+		}
+	}
+
+	return result
+}
