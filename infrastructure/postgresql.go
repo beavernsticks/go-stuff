@@ -37,3 +37,12 @@ func NewPostgresDB(config bsgostuff_config.PostgreSQL) (*pgxpool.Pool, error) {
 
 	return pool, nil
 }
+
+// MustNewPostgresDB создает адаптер или паникует при ошибке
+func MustNewPostgresDB(cfg bsgostuff_config.PostgreSQL) *pgxpool.Pool {
+	pool, err := NewPostgresDB(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize PostgreSQL connection: %w", err))
+	}
+	return pool
+}

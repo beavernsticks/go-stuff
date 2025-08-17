@@ -53,6 +53,15 @@ func NewNATSBroker(cfg bsgostuff_config.NATS) (*NATSBroker, error) {
 	}, nil
 }
 
+// MustNewNATSBroker создает адаптер или паникует при ошибке
+func MustNewNATSBroker(cfg bsgostuff_config.NATS) *NATSBroker {
+	broker, err := NewNATSBroker(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize NATS broker: %w", err))
+	}
+	return broker
+}
+
 func (b *NATSBroker) Publish(ctx context.Context, topic string, msg proto.Message, opts ...nats.PubOpt) error {
 	fullTopic := b.fullTopic(topic)
 	payload, err := proto.Marshal(msg)

@@ -42,6 +42,15 @@ func NewRedisAdapter(cfg bsgostuff_config.Redis) (*RedisAdapter, error) {
 	}, nil
 }
 
+// MustNewRedisAdapter создает адаптер или паникует при ошибке
+func MustNewRedisAdapter(cfg bsgostuff_config.Redis) *RedisAdapter {
+	adapter, err := NewRedisAdapter(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize Redis adapter: %w", err))
+	}
+	return adapter
+}
+
 // Close закрывает соединение
 func (a *RedisAdapter) Close() error {
 	return a.client.Close()
