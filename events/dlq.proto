@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package bsgostuff_events;
+option  go_package = "github.com/beavernsticks/go-stuff/events;bsgostuff_events";
+
+message DeadLetter {
+  string original_topic = 1;
+  bytes  payload        = 2;
+  string error          = 3;
+  int32  attempt        = 4;
+  string timestamp      = 5;
+}

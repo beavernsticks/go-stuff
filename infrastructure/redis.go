@@ -1,49 +1,115 @@
-package shared_infrastructure
+package bsgostuff_infrastructure
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	bsgostuff_config "github.com/beavernsticks/go-stuff/config"
+	bsgostuff_domain "github.com/beavernsticks/go-stuff/domain"
 	"github.com/go-redis/redis/v8"
+	"google.golang.org/protobuf/proto"
 )
 
-type RedisClient struct {
+// RedisAdapter - универсальный клиент для работы с Redis
+type RedisAdapter struct {
 	client *redis.Client
+	prefix string
 }
 
-func (r *RedisClient) Raw() *redis.Client {
-	return r.client
-}
-
-func NewRedisClient(config bsgostuff_config.Redis) *RedisClient {
-	redisHost := config.Host
-
-	if redisHost == "" {
-		redisHost = ":6379"
-	}
-
+// New создает новый экземпляр адаптера
+func NewRedisAdapter(cfg bsgostuff_config.Redis) (*RedisAdapter, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     redisHost,
-		Password: config.Password,
-		DB:       config.Database,
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.Database,
 	})
 
-	return &RedisClient{client: client}
+	if err := client.Ping(context.Background()).Err(); err != nil {
+		return nil, fmt.Errorf("redis connection failed: %w", err)
+	}
+
+	var prefix string
+	if cfg.Prefix != "" {
+		prefix = cfg.Prefix + ":"
+	}
+
+	return &RedisAdapter{
+		client: client,
+		prefix: prefix, // "prod:user:123"
+	}, nil
 }
 
-func (r *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
-	return r.client.Set(ctx, key, value, expiration)
+// Close закрывает соединение
+func (a *RedisAdapter) Close() error {
+	return a.client.Close()
 }
 
-func (r *RedisClient) Get(ctx context.Context, key string) *redis.StringCmd {
-	return r.client.Get(ctx, key)
+// GetProto получает и десериализует protobuf-сообщение
+func (a *RedisAdapter) GetProto(ctx context.Context, key string, msg proto.Message) error {
+	fullKey := a.prefix + key
+
+	data, err := a.client.Get(ctx, fullKey).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return bsgostuff_domain.ErrNotFound
+		}
+		return err
+	}
+
+	return proto.Unmarshal(data, msg)
 }
 
-func (r *RedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd {
-	return r.client.Del(ctx, keys...)
+// SetProto сериализует и сохраняет protobuf-сообщение
+func (a *RedisAdapter) SetProto(ctx context.Context, key string, msg proto.Message, ttl time.Duration) error {
+	fullKey := a.prefix + key
+
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	return a.client.Set(ctx, fullKey, data, ttl).Err()
 }
 
-func (r *RedisClient) Pipeline() redis.Pipeliner {
-	return r.client.Pipeline()
+// GetJSON получает и десериализует JSON
+func (a *RedisAdapter) GetJSON(ctx context.Context, key string, dest interface{}) error {
+	fullKey := a.prefix + key
+
+	data, err := a.client.Get(ctx, fullKey).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return bsgostuff_domain.ErrNotFound
+		}
+		return err
+	}
+
+	return json.Unmarshal(data, dest)
+}
+
+// SetJSON сериализует и сохраняет JSON
+func (a *RedisAdapter) SetJSON(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	fullKey := a.prefix + key
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	return a.client.Set(ctx, fullKey, data, ttl).Err()
+}
+
+// Delete удаляет ключ
+func (a *RedisAdapter) Delete(ctx context.Context, key string) error {
+	return a.client.Del(ctx, a.prefix+key).Err()
+}
+
+// WithPrefix создает новый экземпляр с доп. префиксом
+func (a *RedisAdapter) WithPrefix(prefix string) *RedisAdapter {
+	return &RedisAdapter{
+		client: a.client,
+		prefix: a.prefix + prefix + ":",
+	}
 }

@@ -1,0 +1,19 @@
+# IDE custom files (remove the comment below to include it)
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.history/
+
+# Backups
+*.bkp
+
+.env
+*.dtmp
+.DS_Store
+node_modules
+dist
+.nuxt
+.output
+.nitro
+.cache
+.scannerwork

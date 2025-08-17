@@ -1,4 +1,4 @@
-package shared_infrastructure
+package bsgostuff_infrastructure
 
 import (
 	"context"

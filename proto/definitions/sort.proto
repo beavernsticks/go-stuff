@@ -1,9 +1,9 @@
 syntax = "proto3";
 
 package bsgostuff;
-option go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
 
 message Sort {
-  optional string field = 1;
-  optional bool reverse = 2;
+  optional string field   = 1;
+  optional bool   reverse = 2;
 }

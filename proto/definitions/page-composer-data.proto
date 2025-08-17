@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 package bsgostuff;
-option go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
 
 import "google/protobuf/struct.proto";
 
 message PageComposerData {
-  google.protobuf.Struct content = 1;
+  google.protobuf.Struct content  = 1;
   google.protobuf.Struct metadata = 2;
 }

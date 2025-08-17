@@ -12,6 +12,7 @@ require (
 	github.com/gosimple/slug v1.15.0
 	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
 	github.com/jackc/pgx/v5 v5.7.5
+	github.com/nats-io/nats.go v1.44.0
 	github.com/vektah/gqlparser/v2 v2.5.30
 	golang.org/x/crypto v0.41.0
 	google.golang.org/grpc v1.74.2
@@ -36,6 +37,9 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/nats-io/nkeys v0.4.11 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect

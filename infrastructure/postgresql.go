@@ -1,9 +1,8 @@
-package shared_infrastructure
+package bsgostuff_infrastructure
 
 import (
 	"context"
 	"fmt"
-	"time"
 
 	bsgostuff_config "github.com/beavernsticks/go-stuff/config"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
@@ -31,11 +30,6 @@ func NewPostgresDB(config bsgostuff_config.PostgreSQL) (*pgxpool.Pool, error) {
 		pgxuuid.Register(conn.TypeMap())
 		return nil
 	}
-
-	pool.Config().MaxConns = 8
-	pool.Config().MinConns = 2
-	pool.Config().MaxConnLifetime = time.Minute * 30
-	pool.Config().MaxConnIdleTime = time.Minute * 5
 
 	if err = pool.Ping(context.Background()); err != nil {
 		return nil, err
