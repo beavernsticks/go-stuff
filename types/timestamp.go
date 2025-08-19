@@ -27,6 +27,12 @@ type Timestamp struct {
 	null  bool
 }
 
+type Timestamps = Slice[Timestamp]
+
+func NewTimestamps(items []Timestamp) Timestamps {
+	return Timestamps(Slice[Timestamp]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[time.Time, *timestamppb.Timestamp, pgtype.Timestamp] = (*Timestamp)(nil)
 

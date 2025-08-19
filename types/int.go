@@ -23,6 +23,12 @@ type Int struct {
 	null  bool
 }
 
+type Ints = Slice[Int]
+
+func NewInts(items []Int) Ints {
+	return Ints(Slice[Int]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[int64, *wrapperspb.Int64Value, pgtype.Int8] = (*Int)(nil)
 

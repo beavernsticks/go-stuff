@@ -29,6 +29,12 @@ type Struct[T any] struct {
 	null  bool
 }
 
+type Structs[T any] = Slice[Struct[T]]
+
+func NewStructs[T any](items []Struct[T]) Structs[T] {
+	return Structs[T](Slice[Struct[T]]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[any, proto.Message, pgtype.Text] = (*Struct[any])(nil)
 

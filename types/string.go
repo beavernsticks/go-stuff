@@ -19,6 +19,12 @@ type String struct {
 	null  bool
 }
 
+type Strings = Slice[String]
+
+func NewStrings(items []String) Strings {
+	return Strings(Slice[String]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[string, *wrapperspb.StringValue, pgtype.Text] = (*String)(nil)
 

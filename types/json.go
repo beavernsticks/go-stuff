@@ -29,6 +29,12 @@ type JSON struct {
 	valid bool // tracks whether data is valid JSON
 }
 
+type JSONs = Slice[JSON]
+
+func NewJSONs(items []JSON) JSONs {
+	return JSONs(Slice[JSON]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[json.RawMessage, *structpb.Struct, pgtype.Text] = (*JSON)(nil)
 

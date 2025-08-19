@@ -35,6 +35,12 @@ type Enum[T comparable] struct {
 	null  bool
 }
 
+type Enums[T comparable] = Slice[Enum[T]]
+
+func NewEnums[T comparable](items []Enum[T]) Enums[T] {
+	return Enums[T](Slice[Enum[T]]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[any, any, pgtype.Text] = (*Enum[any])(nil)
 

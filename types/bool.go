@@ -21,6 +21,12 @@ type Bool struct {
 	null  bool
 }
 
+type Bools = Slice[Bool]
+
+func NewBools(items []Bool) Bools {
+	return Bools(Slice[Bool]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[bool, *wrapperspb.BoolValue, pgtype.Bool] = (*Bool)(nil)
 

@@ -20,6 +20,12 @@ type ID struct {
 	null  bool
 }
 
+type IDs = Slice[ID]
+
+func NewIDs(items []ID) IDs {
+	return IDs(Slice[ID]{items: items, set: true})
+}
+
 // Compile-time interface check
 var _ Settable[uuid.UUID, *wrapperspb.StringValue, pgtype.UUID] = (*ID)(nil)
 
