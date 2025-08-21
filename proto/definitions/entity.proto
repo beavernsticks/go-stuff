@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package bsgostuff;
+option  go_package = "github.com/beavernsticks/go-stuff/proto;bsgostuff_proto";
+
+import "google/protobuf/timestamp.proto";
+
+message Entity {
+  string                    id         = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message DeletableEntity {
+  string                    id         = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  bool                      is_deleted = 4;
+}
+
+message UnmodifiedEntity {
+  string                    id         = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
