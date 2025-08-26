@@ -21,8 +21,8 @@ type String struct {
 
 type Strings = Slice[String]
 
-func NewStrings(items []String) Strings {
-	return Strings(Slice[String]{items: items, set: true})
+func NewStrings(items []string) Strings {
+	return Strings(Slice[String]{items: SliceMapper(items, NewString), set: true})
 }
 
 // Compile-time interface check
