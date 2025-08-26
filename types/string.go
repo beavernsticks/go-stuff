@@ -19,10 +19,10 @@ type String struct {
 	null  bool
 }
 
-type Strings = Slice[String]
+type Strings = Slice[string]
 
 func NewStrings(items []string) Strings {
-	return Strings(Slice[String]{items: SliceMapper(items, NewString), set: true})
+	return Strings(Slice[string]{items: items, set: true})
 }
 
 // Compile-time interface check
