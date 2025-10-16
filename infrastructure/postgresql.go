@@ -13,13 +13,17 @@ import (
 
 // Return new Postgresql db instance
 func NewPostgresDB(config bsgostuff_config.PostgreSQL) (*pgxpool.Pool, error) {
-	dataSourceName := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
-		config.Host,
-		config.Port,
-		config.User,
-		config.DBName,
-		config.Password,
-	)
+	dataSourceName := config.ConnectionString
+
+	if dataSourceName == "" {
+		dataSourceName = fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
+			config.Host,
+			config.Port,
+			config.User,
+			config.DBName,
+			config.Password,
+		)
+	}
 
 	pool, err := pgxpool.New(context.Background(), dataSourceName)
 	if err != nil {
